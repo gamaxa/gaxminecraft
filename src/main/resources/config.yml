@@ -1,0 +1,53 @@
+lang:
+  cmd:
+    ingame: "You must be in-game to use this command."
+  trade:
+    usage: "&eUsage: /gaxtrade <player> <amount>"
+    offline: "&cThe player you're trying to trade with is offline."
+    self: "&cYou can't trade with yourself."
+    existing_trade: "&cThe player you're trying to trade with already has a trade open."
+    invalid_amount: "&cInvalid amount to trade for."
+    error_lookup: "&cAn error occurred looking up your Waves Address."
+    went_offline: "&cThe other player is not online anymore. Please try again."
+    unlinked: "&cYou haven't linked your Waves Account yet. Use /gaxlink to link."
+    already: "&cYou already have a transaction processing."
+    no_item: "&cYou are not holding an item in your hand."
+    start_failed: "&cFailed to start the transaction. Try again."
+    waiting: "&aWaiting 30s for the other player to start the trade."
+    received:
+      - "&aYou have received a trade request from &r%player%&a requesting &r&o%amount%&a GAX."
+      - "&a  You have 30s to /gaxConfirm or /gaxDeny the trade."
+    received_itemstack:
+      text: "Hover over me to see the ItemStack (%item% x %amount%)"
+      color: GREEN
+  confirm:
+    no_trades: "&cYou do not have an open trade."
+    error: "&cAn error occurred confirming the trade. Please try again."
+    other_confirmed: "&a%player% has confirmed the trade. They have 10 minutes to complete the trade, or your item will be refunded."
+    confirmed:
+      - "&aTrade confirmed! To complete the trade, follow the following steps:"
+      - "&a&l  1) Click on this link: &r%link%"
+      - "&a&l  2) In the description, type the code &r&n%code%"
+      - "&a     (do NOT skip step 2, or you will not get your item!)"
+      - "&a You have 10 minutes before the trade times out to complete the payment."
+  claim:
+    error: "&cAn error occurred retrieving your items. Please try again."
+    claimed: "&aYou've claimed &r%items% &aitem(s)."
+    available: "&aA new item is available to be claimed. Run /gaxclaim to claim available items."
+    ready: "&aYou have %items% item(s) ready to be claimed. Run /gaxclaim to claim available items."
+  finished:
+    buyer: "&aYour transaction of &r&o%amount%&a GAX has been processed."
+    seller: "&aYour item has been sold for &r&o%amount% GAX."
+  link:
+    invalid: "&cThat is not a valid Waves Address. Check that you pasted it in correctly."
+    linked: "&aYour Waves Account has been linked."
+    error: "&cAn error occurred linking your account. Please try again later."
+    unlinked: "&eYou have not linked your Waves Account yet."
+    address: "&aYour Waves Address is &r%address%"
+    guide: "&eTo set your Waves Address, run /gaxlink <waves address>"
+  timeout:
+    seller: "&eYour trade request has timed out."
+    buyer: "&eYour pending trade request has timed out."
+    confirmed:
+      seller: "&eYour trade request has timed out."
+      buyer: "&eYour trade request has timed out. If you already sent the GAX, please contact the seller or server owner."

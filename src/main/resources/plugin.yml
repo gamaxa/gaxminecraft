@@ -1,0 +1,15 @@
+name: GAXBukkit
+description: "Integrate GAX with your server!"
+version: 1.0.0
+author: PaulBGD
+main: com.gamaxa.GAXBukkit
+
+commands:
+  gaxtrade:
+    description: Trade your items for GAX
+  gaxlink:
+    description: Link your Waves Account to your Minecraft account
+  gaxconfirm:
+    description: Confirm a trade request from another player
+  gaxclaim:
+    description: Claim any items you have waiting for you
