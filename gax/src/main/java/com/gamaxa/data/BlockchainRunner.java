@@ -4,6 +4,7 @@ import com.gamaxa.GAXBukkit;
 import com.google.common.collect.ImmutableList;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 
 import java.util.List;
 
@@ -20,8 +21,8 @@ public class BlockchainRunner implements Runnable {
 
     @Override
     public void run() {
-        List<Transaction> transactions = ImmutableList.copyOf(this.plugin.getTracker().getTransactions());
-        for (Transaction transaction : transactions) {
+        List<Transaction<ItemStack>> transactions = ImmutableList.copyOf(this.plugin.getTracker().getTransactions());
+        for (Transaction<ItemStack> transaction : transactions) {
             long diff = System.currentTimeMillis() - transaction.getTimestamp();
             if (!transaction.isConfirmed() && diff > 30 * 1000) {
                 this.plugin.getTracker().removeTransaction(transaction);
@@ -33,7 +34,7 @@ public class BlockchainRunner implements Runnable {
                 if (buyer != null) {
                     this.plugin.getData().sendMessage(buyer, "lang.timeout.buyer");
                 }
-                this.plugin.getTracker().givePlayerItem(transaction.getSeller(), transaction.getItemStack());
+                this.plugin.getTracker().givePlayerItem(transaction.getSeller(), transaction.getItem());
             } else if (transaction.isConfirmed() && diff > 10 * 60 * 1000) {
                 this.plugin.getTracker().removeTransaction(transaction);
                 Player seller = Bukkit.getPlayer(transaction.getSeller());
@@ -44,7 +45,7 @@ public class BlockchainRunner implements Runnable {
                 if (buyer != null) {
                     this.plugin.getData().sendMessage(buyer, "lang.timeout.confirmed.buyer");
                 }
-                this.plugin.getTracker().givePlayerItem(transaction.getSeller(), transaction.getItemStack());
+                this.plugin.getTracker().givePlayerItem(transaction.getSeller(), transaction.getItem());
             }
         }
     }

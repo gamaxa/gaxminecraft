@@ -10,10 +10,10 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.io.BukkitObjectInputStream;
 import org.bukkit.util.io.BukkitObjectOutputStream;
 
-import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
@@ -34,18 +34,24 @@ public class FlatStorage extends Storage {
 
     private final File folder;
     private final File transFolder;
+    private final File cardFolder;
+    private final File paymentFolder;
 
     public FlatStorage(GAXBukkit plugin) {
         super(plugin);
 
-        this.folder = new File(plugin.getDataFolder(), "data");
-        if (!this.folder.exists() && !this.folder.mkdirs()) {
-            throw new IllegalArgumentException("Failed to create folder " + this.folder);
+        this.folder = createFolder("data");
+        this.transFolder = createFolder("transactions");
+        this.cardFolder = createFolder("cards");
+        this.paymentFolder = createFolder("payments");
+    }
+
+    private File createFolder(String name) {
+        File folder = new File(this.plugin.getDataFolder(), name);
+        if (!folder.exists() && !folder.mkdirs()) {
+            throw new IllegalArgumentException("Failed to create folder " + folder);
         }
-        this.transFolder = new File(plugin.getDataFolder(), "transactions");
-        if (!this.transFolder.exists() && !this.transFolder.mkdirs()) {
-            throw new IllegalArgumentException("Failed to create folder " + this.transFolder);
-        }
+        return folder;
     }
 
     private File getFolder(UUID uuid) {
@@ -152,7 +158,7 @@ public class FlatStorage extends Storage {
         }
     }
 
-    private String generateHash(Transaction transaction) throws NoSuchAlgorithmException {
+    private String generateHash(Transaction<?> transaction) throws NoSuchAlgorithmException {
         byte[] data = new byte[4 * 8]; // 4 longs, 8 bytes each
         ByteBuffer buffer = ByteBuffer.wrap(data);
         buffer.putLong(transaction.getSeller().getLeastSignificantBits());
@@ -165,7 +171,7 @@ public class FlatStorage extends Storage {
     }
 
     @Override
-    public void saveTransaction(Transaction transaction, Consumer<Throwable> consumer) {
+    public void saveTransaction(Transaction<?> transaction, Consumer<Throwable> consumer) {
         if (Bukkit.isPrimaryThread()) {
             Bukkit.getScheduler().runTaskAsynchronously(this.plugin, () -> saveTransaction(transaction, e -> {
                 Bukkit.getScheduler().runTask(this.plugin, () -> consumer.accept(e));
@@ -188,7 +194,7 @@ public class FlatStorage extends Storage {
             outputStream.writeLong(transaction.getBuyer().getLeastSignificantBits());
             outputStream.writeLong(transaction.getBuyer().getMostSignificantBits());
             // itemstack
-            outputStream.writeObject(transaction.getItemStack());
+            outputStream.writeObject(transaction.getItem());
             // amount
             outputStream.writeLong(transaction.getAmount().longValue());
             outputStream.writeInt(transaction.getAmount().scale());
@@ -206,7 +212,7 @@ public class FlatStorage extends Storage {
     }
 
     @Override
-    public void removeTransaction(Transaction transaction, Consumer<Throwable> consumer) {
+    public void removeTransaction(Transaction<?> transaction, Consumer<Throwable> consumer) {
         if (Bukkit.isPrimaryThread()) {
             Bukkit.getScheduler().runTaskAsynchronously(this.plugin, () -> removeTransaction(transaction, e -> {
                 Bukkit.getScheduler().runTask(this.plugin, () -> consumer.accept(e));
@@ -223,8 +229,81 @@ public class FlatStorage extends Storage {
     }
 
     @Override
-    public List<Transaction> getAndClearTransactions() {
-        List<Transaction> transactions = new ArrayList<>();
+    public void setGiftCard(UUID uuid, String card, Consumer<Throwable> consumer) {
+        if (Bukkit.isPrimaryThread()) {
+            Bukkit.getScheduler().runTaskAsynchronously(this.plugin, () -> setGiftCard(uuid, card, consumer));
+            return;
+        }
+        File cardFile = new File(this.cardFolder, uuid.toString());
+        try (FileOutputStream outputStream = new FileOutputStream(cardFile)) {
+            outputStream.write(card.getBytes(StandardCharsets.UTF_8));
+        } catch (IOException e) {
+            Bukkit.getScheduler().runTask(this.plugin, () -> consumer.accept(e));
+            return;
+        }
+        Bukkit.getScheduler().runTask(this.plugin, () -> consumer.accept(null));
+    }
+
+    @Override
+    public void getGiftCard(UUID uuid, BiConsumer<String, Throwable> consumer) {
+        if (Bukkit.isPrimaryThread()) {
+            Bukkit.getScheduler().runTaskAsynchronously(this.plugin, () -> getGiftCard(uuid, consumer));
+            return;
+        }
+        File cardFile = new File(this.cardFolder, uuid.toString());
+        String card = null;
+        if (cardFile.exists()) {
+            try (FileInputStream inputStream = new FileInputStream(cardFile)) {
+                byte[] bytes = new byte[128]; // more than enough
+                if (inputStream.read(bytes) <= 0) {
+                    throw new IOException("Read invalid amount of bytes");
+                }
+                card = new String(bytes, StandardCharsets.UTF_8);
+            } catch (IOException e) {
+                Bukkit.getScheduler().runTask(this.plugin, () -> consumer.accept(null, e));
+                return;
+            }
+        }
+        String finalCard = card;
+        Bukkit.getScheduler().runTask(this.plugin, () -> consumer.accept(finalCard, null));
+    }
+
+    @Override
+    public void addProcessedPayment(String paymentId, Consumer<Throwable> consumer) {
+        if (Bukkit.isPrimaryThread()) {
+            Bukkit.getScheduler().runTaskAsynchronously(this.plugin, () -> addProcessedPayment(paymentId, consumer));
+            return;
+        }
+        File cardFile = new File(this.paymentFolder, paymentId);
+        try {
+            if (!cardFile.createNewFile()) {
+                throw new IOException("Failed to create file " + cardFile);
+            }
+        } catch (IOException e) {
+            Bukkit.getScheduler().runTask(this.plugin, () -> consumer.accept(e));
+            return;
+        }
+        Bukkit.getScheduler().runTask(this.plugin, () -> consumer.accept(null));
+    }
+
+    @Override
+    public void isPaymentProcessed(String paymentId, BiConsumer<Boolean, Throwable> consumer) {
+        if (Bukkit.isPrimaryThread()) {
+            Bukkit.getScheduler().runTaskAsynchronously(this.plugin, () -> isPaymentProcessed(paymentId, consumer));
+            return;
+        }
+        boolean exists = this.isPaymentProcessed(paymentId);
+        Bukkit.getScheduler().runTask(this.plugin, () -> consumer.accept(exists, null));
+    }
+
+    @Override
+    public boolean isPaymentProcessed(String paymentId) {
+        return new File(this.paymentFolder, paymentId).exists();
+    }
+
+    @Override
+    public List<Transaction<?>> getAndClearTransactions() {
+        List<Transaction<?>> transactions = new ArrayList<>();
         for (File file : this.transFolder.listFiles()) {
             try {
                 if (file.isDirectory()) {
@@ -237,14 +316,14 @@ public class FlatStorage extends Storage {
                 long sellerMost = inputStream.readLong();
                 long buyerLeast = inputStream.readLong();
                 long buyerMost = inputStream.readLong();
-                ItemStack itemStack = (ItemStack) inputStream.readObject();
+                Object itemStack = inputStream.readObject();
                 long amount = inputStream.readLong();
                 int scale = inputStream.readInt();
                 String address = (String) inputStream.readObject();
                 long timestamp = inputStream.readLong();
                 boolean confirmed = inputStream.readBoolean();
-                transactions.add(new Transaction(id, new UUID(sellerMost, sellerLeast), new UUID(buyerMost, buyerLeast), itemStack, BigDecimal.valueOf(amount, scale), address, timestamp, confirmed));
-                file.delete();
+                transactions.add(new Transaction<>(id, new UUID(sellerMost, sellerLeast), new UUID(buyerMost, buyerLeast), itemStack, BigDecimal.valueOf(amount, scale), address, timestamp, confirmed));
+//                file.delete();
             } catch (Throwable e) {
                 this.plugin.getLogger().log(Level.WARNING, "Failed to load transaction!", e);
             }

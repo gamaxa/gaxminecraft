@@ -13,3 +13,6 @@ commands:
     description: Confirm a trade request from another player
   gaxclaim:
     description: Claim any items you have waiting for you
+  gaxcard:
+    aliases: [gaxgiftcard]
+    description: Deposit funds into a Buycraft giftcard!

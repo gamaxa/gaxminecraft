@@ -8,21 +8,21 @@ import java.util.UUID;
 /**
  * @author PaulBGD
  */
-public class Transaction {
+public class Transaction<I> {
     private final String id;
     private final UUID seller;
     private final UUID buyer;
-    private final ItemStack itemStack;
+    private final I itemStack;
     private final BigDecimal amount;
     private final String sellerAddress;
     private final long timestamp;
     private boolean confirmed;
 
-    public Transaction(String id, UUID seller, UUID buyer, ItemStack itemStack, BigDecimal amount, String sellerAddress) {
+    public Transaction(String id, UUID seller, UUID buyer, I itemStack, BigDecimal amount, String sellerAddress) {
         this(id, seller, buyer, itemStack, amount, sellerAddress, System.currentTimeMillis(), false);
     }
 
-    public Transaction(String id, UUID seller, UUID buyer, ItemStack itemStack, BigDecimal amount, String sellerAddress, long timestamp, boolean confirmed) {
+    public Transaction(String id, UUID seller, UUID buyer, I itemStack, BigDecimal amount, String sellerAddress, long timestamp, boolean confirmed) {
         this.id = id;
         this.seller = seller;
         this.buyer = buyer;
@@ -45,7 +45,7 @@ public class Transaction {
         return buyer;
     }
 
-    public ItemStack getItemStack() {
+    public I getItem() {
         return itemStack;
     }
 

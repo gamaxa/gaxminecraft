@@ -29,12 +29,22 @@ public abstract class Storage {
 
     public abstract void clearPendingItems(UUID uuid);
 
-    public abstract void saveTransaction(Transaction transaction, Consumer<Throwable> consumer);
+    public abstract void saveTransaction(Transaction<?> transaction, Consumer<Throwable> consumer);
 
-    public abstract void removeTransaction(Transaction transaction, Consumer<Throwable> consumer);
+    public abstract void removeTransaction(Transaction<?> transaction, Consumer<Throwable> consumer);
+
+    public abstract void setGiftCard(UUID uuid, String card, Consumer<Throwable> consumer);
+
+    public abstract void addProcessedPayment(String paymentId, Consumer<Throwable> consumer);
+
+    public abstract void isPaymentProcessed(String paymentId, BiConsumer<Boolean, Throwable> consumer);
+
+    public abstract boolean isPaymentProcessed(String paymentId);
+
+    public abstract void getGiftCard(UUID uuid, BiConsumer<String, Throwable> consumer);
 
     /**
      * Note: runs on current thread, meant to be used on startup
      */
-    public abstract List<Transaction> getAndClearTransactions();
+    public abstract List<Transaction<?>> getAndClearTransactions();
 }

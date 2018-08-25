@@ -9,6 +9,7 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 
 import java.math.BigDecimal;
 import java.security.SecureRandom;
@@ -88,12 +89,12 @@ public class TradeCommand implements CommandExecutor {
             }
 
             int rand = this.secureRandom.nextInt(100000);
-            Transaction trans = new Transaction(String.format("%04d", rand), player.getUniqueId(), other.getUniqueId(), player.getItemInHand().clone(), amount, addr);
+            Transaction<ItemStack> trans = new Transaction<>(String.format("%04d", rand), player.getUniqueId(), other.getUniqueId(), player.getItemInHand().clone(), amount, addr);
             player.setItemInHand(null);
             this.plugin.getStorage().saveTransaction(trans, e2 -> {
                 if (e2 != null) {
                     this.plugin.getData().sendMessage(player, "lang.trade.start_failed");
-                    this.plugin.getTracker().givePlayerItem(player.getUniqueId(), trans.getItemStack());
+                    this.plugin.getTracker().givePlayerItem(player.getUniqueId(), trans.getItem());
                     this.plugin.getLogger().log(Level.WARNING, "Failed to save transaction", e2);
                     return;
                 }
@@ -104,9 +105,9 @@ public class TradeCommand implements CommandExecutor {
                         "amount", amount + ""
                 ));
                 this.plugin.getData().sendMessage(player, "lang.trade.received_itemstack", ImmutableMap.of(
-                        "item", trans.getItemStack().getType().name().toLowerCase(),
-                        "amount", trans.getItemStack().getAmount() + ""
-                ), trans.getItemStack());
+                        "item", trans.getItem().getType().name().toLowerCase(),
+                        "amount", trans.getItem().getAmount() + ""
+                ), trans.getItem());
             });
         });
 
