@@ -1,6 +1,7 @@
 package com.gamaxa.storage;
 
 import com.gamaxa.GAXBukkit;
+import com.gamaxa.buycraft.BuycraftGiftcard;
 import com.gamaxa.data.Transaction;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.Files;
@@ -229,14 +230,14 @@ public class FlatStorage extends Storage {
     }
 
     @Override
-    public void setGiftCard(UUID uuid, String card, Consumer<Throwable> consumer) {
+    public void setGiftCard(UUID uuid, BuycraftGiftcard card, Consumer<Throwable> consumer) {
         if (Bukkit.isPrimaryThread()) {
             Bukkit.getScheduler().runTaskAsynchronously(this.plugin, () -> setGiftCard(uuid, card, consumer));
             return;
         }
         File cardFile = new File(this.cardFolder, uuid.toString());
         try (FileOutputStream outputStream = new FileOutputStream(cardFile)) {
-            outputStream.write(card.getBytes(StandardCharsets.UTF_8));
+            outputStream.write((card.id + ":" + card.code).getBytes(StandardCharsets.UTF_8));
         } catch (IOException e) {
             Bukkit.getScheduler().runTask(this.plugin, () -> consumer.accept(e));
             return;
@@ -245,26 +246,22 @@ public class FlatStorage extends Storage {
     }
 
     @Override
-    public void getGiftCard(UUID uuid, BiConsumer<String, Throwable> consumer) {
+    public void getGiftCard(UUID uuid, BiConsumer<BuycraftGiftcard, Throwable> consumer) {
         if (Bukkit.isPrimaryThread()) {
             Bukkit.getScheduler().runTaskAsynchronously(this.plugin, () -> getGiftCard(uuid, consumer));
             return;
         }
         File cardFile = new File(this.cardFolder, uuid.toString());
-        String card = null;
+        String[] card = null;
         if (cardFile.exists()) {
-            try (FileInputStream inputStream = new FileInputStream(cardFile)) {
-                byte[] bytes = new byte[128]; // more than enough
-                if (inputStream.read(bytes) <= 0) {
-                    throw new IOException("Read invalid amount of bytes");
-                }
-                card = new String(bytes, StandardCharsets.UTF_8);
+            try {
+                card = Files.toString(cardFile, StandardCharsets.UTF_8).split(":");
             } catch (IOException e) {
                 Bukkit.getScheduler().runTask(this.plugin, () -> consumer.accept(null, e));
                 return;
             }
         }
-        String finalCard = card;
+        BuycraftGiftcard finalCard = card == null ? null : new BuycraftGiftcard(Integer.parseInt(card[0]), card[1]);
         Bukkit.getScheduler().runTask(this.plugin, () -> consumer.accept(finalCard, null));
     }
 
@@ -276,8 +273,8 @@ public class FlatStorage extends Storage {
         }
         File cardFile = new File(this.paymentFolder, paymentId);
         try {
-            if (!cardFile.createNewFile()) {
-                throw new IOException("Failed to create file " + cardFile);
+            if (!cardFile.exists()) {
+                cardFile.createNewFile();
             }
         } catch (IOException e) {
             Bukkit.getScheduler().runTask(this.plugin, () -> consumer.accept(e));

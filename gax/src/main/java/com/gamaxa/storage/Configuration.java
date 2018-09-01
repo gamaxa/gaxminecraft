@@ -30,7 +30,6 @@ public class Configuration {
 
     private void updateSection(ConfigurationSection configSec, ConfigurationSection builtinSec) {
         for (String key : builtinSec.getKeys(true)) {
-            System.out.println("Contains " + builtinSec.getCurrentPath() + "." + key + " " + configSec.contains(key));
             if (!configSec.contains(key)) {
                 configSec.set(key, builtinSec.get(key));
             }

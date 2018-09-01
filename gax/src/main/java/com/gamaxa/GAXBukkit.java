@@ -1,5 +1,6 @@
 package com.gamaxa;
 
+import com.gamaxa.buycraft.BuycraftGiftcard;
 import com.gamaxa.buycraft.TransactionTracker;
 import com.gamaxa.commands.*;
 import com.gamaxa.data.BlockchainRunner;
@@ -44,9 +45,9 @@ public class GAXBukkit extends JavaPlugin {
                 .filter(t -> t.getItem() instanceof ItemStack)
                 .map(t -> (Transaction<ItemStack>) t)
                 .collect(Collectors.toList());
-        List<Transaction<String>> giftcards = transactions.stream()
-                .filter(t -> t.getItem() instanceof String)
-                .map(t -> (Transaction<String>) t)
+        List<Transaction<BuycraftGiftcard>> giftcards = transactions.stream()
+                .filter(t -> t.getItem() instanceof BuycraftGiftcard)
+                .map(t -> (Transaction<BuycraftGiftcard>) t)
                 .collect(Collectors.toList());
 
         try {
@@ -66,7 +67,7 @@ public class GAXBukkit extends JavaPlugin {
             getCommand("gaxcard").setExecutor(new GiftcardCommand(this));
             try {
                 this.tTracker = new TransactionTracker(this, giftcards);
-                Bukkit.getScheduler().runTaskTimerAsynchronously(this, tTracker, 20L, 15 * 20L);
+                Bukkit.getScheduler().runTaskTimerAsynchronously(this, tTracker, 20L, 5 * 20L);
             } catch (URISyntaxException e) {
                 this.getLogger().log(Level.WARNING, "", e);
             }

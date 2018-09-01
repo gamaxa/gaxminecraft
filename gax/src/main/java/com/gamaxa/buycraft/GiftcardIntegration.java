@@ -8,6 +8,7 @@ import org.apache.http.HttpEntity;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -44,7 +45,7 @@ public class GiftcardIntegration {
         return map;
     }
 
-    public void createGiftCard(double amount, BiConsumer<String, Throwable> consumer) {
+    public void createGiftCard(double amount, BiConsumer<BuycraftGiftcard, Throwable> consumer) {
         if (Bukkit.isPrimaryThread()) {
             Bukkit.getScheduler().runTaskAsynchronously(this.plugin, () -> createGiftCard(amount, consumer));
             return;
@@ -60,29 +61,30 @@ public class GiftcardIntegration {
 
         try (CloseableHttpResponse res = client.execute(post)) {
             HttpEntity resEntity = res.getEntity();
-            InputStreamReader reader = new InputStreamReader(resEntity.getContent());
-            System.out.println(CharStreams.toString(reader));
-//            BuycraftResponse br = this.gson.fromJson(new InputStreamReader(resEntity.getContent()), BuycraftResponse.class);
-//            System.out.println("Got response " + br);
-//            Bukkit.getScheduler().runTask(this.plugin, () -> consumer.accept(br.code, null));
+            BuycraftResponse br = this.gson.fromJson(new InputStreamReader(resEntity.getContent()), BuycraftResponse.class);
+            Bukkit.getScheduler().runTask(this.plugin, () -> consumer.accept(new BuycraftGiftcard(br.data.id, br.data.code), null));
         } catch (IOException e) {
             Bukkit.getScheduler().runTask(this.plugin, () -> consumer.accept(null, e));
         }
     }
 
-    public void creditGiftCard(String card, BigDecimal amount) throws IOException {
+    public void creditGiftCard(int card, BigDecimal amount) throws IOException {
         JsonObject main = new JsonObject();
         main.addProperty("amount", amount.toPlainString());
 
         CloseableHttpClient client = HttpClients.createDefault();
-        HttpPost post = new HttpPost("https://plugin.buycraft.net/gift-cards/" + card);
+        HttpPut put = new HttpPut("https://plugin.buycraft.net/gift-cards/" + card);
 
-        post.addHeader("X-Buycraft-Secret", this.plugin.getConfig().getString("buycraft.key"));
+        put.addHeader("X-Buycraft-Secret", this.plugin.getConfig().getString("buycraft.key"));
         StringEntity entity = new StringEntity(this.gson.toJson(main), ContentType.APPLICATION_JSON);
-        post.setEntity(entity);
+        put.setEntity(entity);
 
-        try (CloseableHttpResponse res = client.execute(post)) {
-
+        try (CloseableHttpResponse res = client.execute(put)) {
+            HttpEntity resEntity = res.getEntity();
+            BuycraftErrorResponse br = this.gson.fromJson(new InputStreamReader(resEntity.getContent()), BuycraftErrorResponse.class);
+            if (br.error_message != null) {
+                throw new IOException(br.error_message + " Code " + br.error_code);
+            }
         }
     }
 }

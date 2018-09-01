@@ -1,6 +1,7 @@
 package com.gamaxa.storage;
 
 import com.gamaxa.GAXBukkit;
+import com.gamaxa.buycraft.BuycraftGiftcard;
 import com.gamaxa.data.Transaction;
 import org.bukkit.inventory.ItemStack;
 
@@ -33,7 +34,7 @@ public abstract class Storage {
 
     public abstract void removeTransaction(Transaction<?> transaction, Consumer<Throwable> consumer);
 
-    public abstract void setGiftCard(UUID uuid, String card, Consumer<Throwable> consumer);
+    public abstract void setGiftCard(UUID uuid, BuycraftGiftcard card, Consumer<Throwable> consumer);
 
     public abstract void addProcessedPayment(String paymentId, Consumer<Throwable> consumer);
 
@@ -41,7 +42,7 @@ public abstract class Storage {
 
     public abstract boolean isPaymentProcessed(String paymentId);
 
-    public abstract void getGiftCard(UUID uuid, BiConsumer<String, Throwable> consumer);
+    public abstract void getGiftCard(UUID uuid, BiConsumer<BuycraftGiftcard, Throwable> consumer);
 
     /**
      * Note: runs on current thread, meant to be used on startup

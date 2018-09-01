@@ -1,6 +1,8 @@
 package com.gamaxa.commands;
 
+import com.gamaxa.Data;
 import com.gamaxa.GAXBukkit;
+import com.google.common.collect.ImmutableMap;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -28,10 +30,15 @@ public class GiftcardCommand implements CommandExecutor {
         this.plugin.gettTracker().createTransaction(player.getUniqueId(), (t, e) -> {
             if (e != null) {
                 this.plugin.getLogger().log(Level.WARNING, "Failed to create transaction", e);
-                player.sendMessage("Failed to create transaction.");
+                this.plugin.getData().sendMessage(player, "lang.confirm.error");
                 return;
             }
-            player.sendMessage("To add balance to your giftcard " + t.getItem() + " deposit GAX to " + this.plugin.getConfig().getString("buycraft.address") + " using code " + t.getId());
+            this.plugin.getData().sendMessage(player, "lang.giftcard.created", ImmutableMap.of(
+                    "giftcard", t.getItem().code,
+                    "curr", this.plugin.getConfig().getString("buycraft.ratio"),
+                    "link", Data.getUrl("", this.plugin.getConfig().getString("buycraft.address")),
+                    "code", t.getId()
+            ));
         });
         return false;
     }

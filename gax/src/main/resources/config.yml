@@ -1,9 +1,9 @@
-version: 4
+version: 6
 buycraft:
   enabled: false
   key: SECRET-KEY-HERE
   address: WAVES-ADDRESS-HERE
-  ratio: 50 # USD/GAX
+  ratio: 50 # currency/GAX
 lang:
   cmd:
     ingame: "You must be in-game to use this command."
@@ -36,6 +36,14 @@ lang:
       - "&a&l  2) In the description, type the code &r&n%code%"
       - "&a     (do NOT skip step 2, or you will not get your item!)"
       - "&a You have 10 minutes before the trade times out to complete the payment."
+  giftcard:
+    created:
+      - "&aYour giftcard code is %giftcard%. To deposit GAX at the ratio of $%curr%/GAX follow the steps:"
+      - "&a  1) Click on this link &r%link%"
+      - "&a  2) In the description, type the code &r&n%code%"
+      - "&a     (do NOT skip step 2, or you will not get your item!)"
+    received:
+      - "&aYou have received $%amount% on your giftcard %giftcard%."
   claim:
     error: "&cAn error occurred retrieving your items. Please try again."
     claimed: "&aYou've claimed &r%items% &aitem(s)."
