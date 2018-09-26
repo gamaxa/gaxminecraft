@@ -40,10 +40,10 @@ public class TradeCommand implements CommandExecutor {
             this.plugin.getData().sendMessage(player, "lang.trade.offline");
             return true;
         }
-//        if (player == other) {
-//            this.plugin.getData().sendMessage(player, "lang.trade.self");
-//            return true;
-//        }
+        if (player == other) {
+            this.plugin.getData().sendMessage(player, "lang.trade.self");
+            return true;
+        }
         if (this.plugin.getTradeTracker().isBuying(other.getUniqueId())) {
             this.plugin.getData().sendMessage(player, "lang.trade.existing_trade");
             return true;
