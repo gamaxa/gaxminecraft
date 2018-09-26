@@ -29,11 +29,11 @@ public class ConfirmCommand implements CommandExecutor {
             return true;
         }
         Player player = (Player) commandSender;
-        if (!this.plugin.getTracker().isBuying(player.getUniqueId())) {
+        if (!this.plugin.getTradeTracker().isBuying(player.getUniqueId())) {
             this.plugin.getData().sendMessage(player, "lang.confirm.no_trades");
             return true;
         }
-        this.plugin.getTracker().confirm(player.getUniqueId(), (transaction, e) -> {
+        this.plugin.getTradeTracker().confirm(player.getUniqueId(), (transaction, e) -> {
             if (e != null) {
                 this.plugin.getData().sendMessage(player, "lang.confirm.error");
                 this.plugin.getLogger().log(Level.WARNING, "Failed to confirm trade", e);

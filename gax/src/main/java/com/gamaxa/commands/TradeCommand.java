@@ -40,11 +40,11 @@ public class TradeCommand implements CommandExecutor {
             this.plugin.getData().sendMessage(player, "lang.trade.offline");
             return true;
         }
-        if (player == other) {
-            this.plugin.getData().sendMessage(player, "lang.trade.self");
-            return true;
-        }
-        if (this.plugin.getTracker().isBuying(other.getUniqueId())) {
+//        if (player == other) {
+//            this.plugin.getData().sendMessage(player, "lang.trade.self");
+//            return true;
+//        }
+        if (this.plugin.getTradeTracker().isBuying(other.getUniqueId())) {
             this.plugin.getData().sendMessage(player, "lang.trade.existing_trade");
             return true;
         }
@@ -78,7 +78,7 @@ public class TradeCommand implements CommandExecutor {
                 return;
             }
 
-            if (this.plugin.getTracker().isSelling(addr)) {
+            if (this.plugin.getTradeTracker().isSelling(addr)) {
                 this.plugin.getData().sendMessage(player, "lang.trade.already");
                 return;
             }
@@ -94,11 +94,11 @@ public class TradeCommand implements CommandExecutor {
             this.plugin.getStorage().saveTransaction(trans, e2 -> {
                 if (e2 != null) {
                     this.plugin.getData().sendMessage(player, "lang.trade.start_failed");
-                    this.plugin.getTracker().givePlayerItem(player.getUniqueId(), trans.getItem());
+                    this.plugin.getTradeTracker().givePlayerItem(player.getUniqueId(), trans.getItem());
                     this.plugin.getLogger().log(Level.WARNING, "Failed to save transaction", e2);
                     return;
                 }
-                this.plugin.getTracker().addTransaction(trans);
+                this.plugin.getTradeTracker().addTransaction(trans);
                 this.plugin.getData().sendMessage(player, "lang.trade.waiting");
                 this.plugin.getData().sendMessage(other, "lang.trade.received", ImmutableMap.of(
                         "player", player.getName(),

@@ -24,7 +24,7 @@ import java.util.logging.Level;
 /**
  * @author PaulBGD
  */
-public class TransactionTracker implements Runnable {
+public class GiftcardTracker implements Runnable {
     private final GAXBukkit plugin;
     private final Map<String, Transaction<BuycraftGiftcard>> cards = new HashMap<>();
     private final Node node = new Node(Data.getNodeUrl(false));
@@ -33,7 +33,7 @@ public class TransactionTracker implements Runnable {
 
     private String lastTransaction = "";
 
-    public TransactionTracker(GAXBukkit plugin, List<Transaction<BuycraftGiftcard>> transactions) throws URISyntaxException {
+    public GiftcardTracker(GAXBukkit plugin, List<Transaction<BuycraftGiftcard>> transactions) throws URISyntaxException {
         this.plugin = plugin;
         for (Transaction<BuycraftGiftcard> transaction : transactions) {
             this.cards.put(transaction.getId(), transaction);
@@ -99,6 +99,7 @@ public class TransactionTracker implements Runnable {
                         decoded = Base58.decode((String) transaction.get("attachment"));
                     } catch (Exception e) {
                         // eh
+                        this.plugin.getLogger().log(Level.WARNING, "Failed to parse transaction id from transactions " + transaction.get("id"), e);
                         this.plugin.getStorage().addProcessedPayment((String) transaction.get("id"), e2 -> {
                             if (e2 != null) {
                                 this.plugin.getLogger().log(Level.WARNING, "Failed to add payment!", e2);
@@ -113,6 +114,7 @@ public class TransactionTracker implements Runnable {
 
                     Transaction<BuycraftGiftcard> t = this.cards.get(str);
                     if (t == null) {
+                        this.plugin.getLogger().log(Level.WARNING, "Failed to find giftcard for id " + str);
                         this.plugin.getStorage().addProcessedPayment((String) transaction.get("id"), e -> {
                             if (e != null) {
                                 this.plugin.getLogger().log(Level.WARNING, "Failed to add payment!", e);
@@ -122,6 +124,7 @@ public class TransactionTracker implements Runnable {
                     }
                     BigDecimal amount = BigDecimal.valueOf((long) (int) transaction.get("amount"), 8);
                     amount = amount.multiply(BigDecimal.valueOf(this.plugin.getConfig().getDouble("buycraft.ratio")));
+                    this.plugin.getLogger().log(Level.INFO, "Adding " + amount.toPlainString() + " to giftcard " + t.getItem().id);
                     this.giftcards.creditGiftCard(t.getItem().id, amount);
 
                     this.plugin.getStorage().addProcessedPayment((String) transaction.get("id"), e -> {

@@ -1,10 +1,10 @@
 package com.gamaxa;
 
 import com.gamaxa.buycraft.BuycraftGiftcard;
-import com.gamaxa.buycraft.TransactionTracker;
+import com.gamaxa.buycraft.GiftcardTracker;
 import com.gamaxa.commands.*;
 import com.gamaxa.data.BlockchainRunner;
-import com.gamaxa.data.Tracker;
+import com.gamaxa.data.TradeTracker;
 import com.gamaxa.data.Transaction;
 import com.gamaxa.listener.PlayerListener;
 import com.gamaxa.storage.Configuration;
@@ -27,8 +27,8 @@ public class GAXBukkit extends JavaPlugin {
 
     private Configuration configuration;
     private Storage storage;
-    private Tracker tracker;
-    private TransactionTracker tTracker;
+    private TradeTracker tradeTracker;
+    private GiftcardTracker tTracker;
 
     @Override
     public void onEnable() {
@@ -51,7 +51,7 @@ public class GAXBukkit extends JavaPlugin {
                 .collect(Collectors.toList());
 
         try {
-            this.tracker = new Tracker(this, trades);
+            this.tradeTracker = new TradeTracker(this, trades);
         } catch (URISyntaxException | IOException e) {
             e.printStackTrace();
             this.getPluginLoader().disablePlugin(this);
@@ -61,12 +61,12 @@ public class GAXBukkit extends JavaPlugin {
         this.getServer().getPluginManager().registerEvents(new PlayerListener(this), this);
 
         Bukkit.getScheduler().runTaskTimer(this, new BlockchainRunner(this), 5 * 20L, 5 * 20L);
-        Bukkit.getScheduler().runTaskTimerAsynchronously(this, this.tracker, 10 * 20L, 15 * 20L);
+        Bukkit.getScheduler().runTaskTimerAsynchronously(this, this.tradeTracker,  20L, 5 * 20L);
 
         if (this.getConfig().getBoolean("buycraft.enabled")) {
             getCommand("gaxcard").setExecutor(new GiftcardCommand(this));
             try {
-                this.tTracker = new TransactionTracker(this, giftcards);
+                this.tTracker = new GiftcardTracker(this, giftcards);
                 Bukkit.getScheduler().runTaskTimerAsynchronously(this, tTracker, 20L, 5 * 20L);
             } catch (URISyntaxException e) {
                 this.getLogger().log(Level.WARNING, "", e);
@@ -82,11 +82,11 @@ public class GAXBukkit extends JavaPlugin {
         return storage;
     }
 
-    public Tracker getTracker() {
-        return tracker;
+    public TradeTracker getTradeTracker() {
+        return tradeTracker;
     }
 
-    public TransactionTracker gettTracker() {
+    public GiftcardTracker gettTracker() {
         return tTracker;
     }
 }

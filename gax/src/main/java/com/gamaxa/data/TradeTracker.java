@@ -4,14 +4,12 @@ import com.gamaxa.Data;
 import com.gamaxa.GAXBukkit;
 import com.google.common.collect.ImmutableMap;
 import com.wavesplatform.wavesj.Base58;
-import com.wavesplatform.wavesj.Block;
 import com.wavesplatform.wavesj.Node;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
@@ -25,16 +23,14 @@ import java.util.logging.Level;
 /**
  * @author PaulBGD
  */
-public class Tracker implements Runnable {
+public class TradeTracker implements Runnable {
 
     private final GAXBukkit plugin;
     private final Map<String, Transaction<ItemStack>> seller = new ConcurrentHashMap<>();
     private final Map<UUID, Transaction<ItemStack>> buyer = new ConcurrentHashMap<>();
     private final Node node = new Node(Data.getNodeUrl(false));
-    private int height = this.node.getHeight();
-    private boolean loggedError = false;
 
-    public Tracker(GAXBukkit plugin, List<Transaction<ItemStack>> transactions) throws URISyntaxException, IOException {
+    public TradeTracker(GAXBukkit plugin, List<Transaction<ItemStack>> transactions) throws URISyntaxException, IOException {
         this.plugin = plugin;
         for (Transaction<ItemStack> transaction : transactions) {
             this.seller.put(transaction.getSellerAddress(), transaction);
@@ -44,49 +40,28 @@ public class Tracker implements Runnable {
 
     @Override
     public void run() {
-        int actualHeight;
-        try {
-            actualHeight = this.node.getHeight();
-        } catch (Exception e) {
-            if (!loggedError) {
-                loggedError = true;
-                // in the case of a 502 error, the exception message is the ENTIRE cloudflare 502 page
-                // this just prints a snippet of the first chars
-                this.plugin.getLogger().log(Level.WARNING, e.getClass().getSimpleName() + "\n" + e.getMessage().substring(0, Math.min(e.getMessage().length(), 800)));
-                for (StackTraceElement stackTraceElement : e.getStackTrace()) {
-                    this.plugin.getLogger().log(Level.WARNING, "\t" + stackTraceElement.toString());
-                }
-            }
-            this.plugin.getLogger().log(Level.WARNING, "Failed to connect to Waves!", e.getStackTrace());
-            return;
-        }
-        if (this.height >= actualHeight) {
-            this.height = actualHeight;
-            return;
-        }
-        do {
-            Block block;
+        for (Map.Entry<String, Transaction<ItemStack>> entry : seller.entrySet()) {
             try {
-                block = this.node.getBlock(this.height);
-            } catch (Exception e) {
-                return; // for some reason the server returns the new height before the block is ready
-            }
-            for (Map<String, Object> transaction : block.transactions) {
-                if (transaction.containsKey("type") &&
-                        transaction.get("type").equals(4) &&
-                        Data.getAssetId(false).equals(transaction.get("assetId")) &&
-                        this.seller.containsKey(transaction.get("recipient"))) {
-                    Transaction<ItemStack> t = this.seller.get(transaction.get("recipient"));
-                    byte[] decoded;
-                    try {
-                        decoded = Base58.decode((String) transaction.get("attachment"));
-                    } catch (Exception e) {
-                        // eh
+                List<Map<String, Object>> transactions = this.node.getTransactionList(entry.getKey(), 10);
+                for (Map<String, Object> transaction : transactions) {
+                    if (!transaction.containsKey("id")) {
                         continue;
                     }
-                    BigDecimal amount = BigDecimal.valueOf((long) transaction.get("amount"), 8);
-                    if (t.getAmount().subtract(amount).doubleValue() <= 0.0000000001) {
+                    if (transaction.containsKey("type") &&
+                            transaction.get("type").equals(4) &&
+                            Data.getAssetId(false).equals(transaction.get("assetId"))) {
+                        byte[] decoded;
+                        try {
+                            decoded = Base58.decode((String) transaction.get("attachment"));
+                        } catch (Exception e) {
+                            // eh
+                            continue;
+                        }
                         String str = new String(decoded, StandardCharsets.UTF_8);
+                        if (str.indexOf(" ") > 0) {
+                            str = str.trim().split(" ")[0].trim(); // try our best in case they added an extra character or something
+                        }
+                        Transaction<ItemStack> t = entry.getValue();
                         if (str.startsWith(t.getId())) {
                             // we're good!
                             Player buyer = Bukkit.getPlayer(t.getBuyer());
@@ -111,8 +86,10 @@ public class Tracker implements Runnable {
                         }
                     }
                 }
+            } catch (Exception e) {
+                this.plugin.getLogger().log(Level.WARNING, "Failed to check transactions for address " + entry.getKey(), e);
             }
-        } while (++this.height <= actualHeight);
+        }
     }
 
     public void givePlayerItem(UUID uuid, ItemStack itemStack) {
@@ -150,7 +127,7 @@ public class Tracker implements Runnable {
     }
 
     public boolean isBuying(UUID buyer) {
-        return this.buyer.containsKey(buyer);
+        return this.buyer.containsKey(buyer) && !this.buyer.get(buyer).isConfirmed();
     }
 
     public boolean confirm(UUID buyer, BiConsumer<Transaction<ItemStack>, Throwable> consumer) {

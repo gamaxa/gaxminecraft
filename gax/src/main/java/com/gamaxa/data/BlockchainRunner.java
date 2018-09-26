@@ -21,11 +21,11 @@ public class BlockchainRunner implements Runnable {
 
     @Override
     public void run() {
-        List<Transaction<ItemStack>> transactions = ImmutableList.copyOf(this.plugin.getTracker().getTransactions());
+        List<Transaction<ItemStack>> transactions = ImmutableList.copyOf(this.plugin.getTradeTracker().getTransactions());
         for (Transaction<ItemStack> transaction : transactions) {
             long diff = System.currentTimeMillis() - transaction.getTimestamp();
             if (!transaction.isConfirmed() && diff > 30 * 1000) {
-                this.plugin.getTracker().removeTransaction(transaction);
+                this.plugin.getTradeTracker().removeTransaction(transaction);
                 Player seller = Bukkit.getPlayer(transaction.getSeller());
                 Player buyer = Bukkit.getPlayer(transaction.getBuyer());
                 if (seller != null) {
@@ -34,9 +34,9 @@ public class BlockchainRunner implements Runnable {
                 if (buyer != null) {
                     this.plugin.getData().sendMessage(buyer, "lang.timeout.buyer");
                 }
-                this.plugin.getTracker().givePlayerItem(transaction.getSeller(), transaction.getItem());
+                this.plugin.getTradeTracker().givePlayerItem(transaction.getSeller(), transaction.getItem());
             } else if (transaction.isConfirmed() && diff > 10 * 60 * 1000) {
-                this.plugin.getTracker().removeTransaction(transaction);
+                this.plugin.getTradeTracker().removeTransaction(transaction);
                 Player seller = Bukkit.getPlayer(transaction.getSeller());
                 Player buyer = Bukkit.getPlayer(transaction.getBuyer());
                 if (seller != null) {
@@ -45,7 +45,7 @@ public class BlockchainRunner implements Runnable {
                 if (buyer != null) {
                     this.plugin.getData().sendMessage(buyer, "lang.timeout.confirmed.buyer");
                 }
-                this.plugin.getTracker().givePlayerItem(transaction.getSeller(), transaction.getItem());
+                this.plugin.getTradeTracker().givePlayerItem(transaction.getSeller(), transaction.getItem());
             }
         }
     }
