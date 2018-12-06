@@ -1,11 +1,11 @@
 package com.gamaxa.buycraft;
 
 import com.gamaxa.GAXBukkit;
-import com.google.common.io.CharStreams;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import org.apache.http.HttpEntity;
-import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.config.CookieSpecs;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
@@ -14,9 +14,7 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.bukkit.Bukkit;
-import sun.misc.IOUtils;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.math.BigDecimal;
@@ -53,7 +51,7 @@ public class GiftcardIntegration {
         JsonObject main = new JsonObject();
         main.addProperty("amount", amount);
 
-        CloseableHttpClient client = HttpClients.createDefault();
+        CloseableHttpClient client = HttpClients.custom().setDefaultRequestConfig(RequestConfig.custom().setCookieSpec(CookieSpecs.STANDARD).build()).build();
         HttpPost post = new HttpPost("https://plugin.buycraft.net/gift-cards");
         post.addHeader("X-Buycraft-Secret", this.plugin.getConfig().getString("buycraft.key"));
         StringEntity entity = new StringEntity(this.gson.toJson(main), ContentType.APPLICATION_JSON);
