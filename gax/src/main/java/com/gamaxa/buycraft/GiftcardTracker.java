@@ -122,7 +122,14 @@ public class GiftcardTracker implements Runnable {
                         });
                         continue;
                     }
-                    BigDecimal amount = BigDecimal.valueOf((long) (int) transaction.get("amount"), 8);
+                    Object amountObj = transaction.get("amount");
+                    BigDecimal amount;
+                    if (amountObj instanceof Integer) {
+                        amount = BigDecimal.valueOf((long) (int) amountObj, 8);
+                    } else {
+                        amount = BigDecimal.valueOf((long) amountObj, 8);
+                    }
+//                    BigDecimal amount = BigDecimal.valueOf((long) (int) transaction.get("amount"), 8);
                     amount = amount.multiply(BigDecimal.valueOf(this.plugin.getConfig().getDouble("buycraft.ratio")));
                     this.plugin.getLogger().log(Level.INFO, "Adding " + amount.toPlainString() + " to giftcard " + t.getItem().id);
                     this.giftcards.creditGiftCard(t.getItem().id, amount);
