@@ -51,7 +51,7 @@ public class GiftcardIntegration {
         JsonObject main = new JsonObject();
         main.addProperty("amount", amount);
 
-        CloseableHttpClient client = HttpClients.custom().setDefaultRequestConfig(RequestConfig.custom().setCookieSpec(CookieSpecs.STANDARD).build()).build();
+        CloseableHttpClient client = HttpClients.custom().setDefaultRequestConfig(RequestConfig.custom().setCookieSpec(CookieSpecs.IGNORE_COOKIES).build()).build();
         HttpPost post = new HttpPost("https://plugin.buycraft.net/gift-cards");
         post.addHeader("X-Buycraft-Secret", this.plugin.getConfig().getString("buycraft.key"));
         StringEntity entity = new StringEntity(this.gson.toJson(main), ContentType.APPLICATION_JSON);
@@ -70,7 +70,7 @@ public class GiftcardIntegration {
         JsonObject main = new JsonObject();
         main.addProperty("amount", amount.toPlainString());
 
-        CloseableHttpClient client = HttpClients.createDefault();
+        CloseableHttpClient client = HttpClients.custom().setDefaultRequestConfig(RequestConfig.custom().setCookieSpec(CookieSpecs.IGNORE_COOKIES).build()).build();
         HttpPut put = new HttpPut("https://plugin.buycraft.net/gift-cards/" + card);
 
         put.addHeader("X-Buycraft-Secret", this.plugin.getConfig().getString("buycraft.key"));

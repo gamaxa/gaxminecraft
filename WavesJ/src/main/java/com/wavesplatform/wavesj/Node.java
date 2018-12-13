@@ -42,7 +42,7 @@ public class Node {
                     .setSocketTimeout(5000)
                     .setConnectTimeout(5000)
                     .setConnectionRequestTimeout(5000)
-                    .setCookieSpec(CookieSpecs.STANDARD)
+                    .setCookieSpec(CookieSpecs.IGNORE_COOKIES)
                     .build())
             .build();
 
