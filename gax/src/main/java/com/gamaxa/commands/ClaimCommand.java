@@ -46,6 +46,7 @@ public class ClaimCommand implements CommandExecutor {
             for (ItemStack itemStack : map.values()) {
                 player.getWorld().dropItem(player.getLocation(), itemStack);
             }
+            this.plugin.getStorage().clearPendingItems(player.getUniqueId());
         });
         return true;
     }
